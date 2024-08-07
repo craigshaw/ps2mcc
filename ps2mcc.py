@@ -3,9 +3,9 @@
 import argparse
 
 def main():
-    parser = argparse.ArgumentParser(description='Strips ECC (Error Correction Codes) from PS2 memory card images. Mainly for compatibility with MCP2 VMCs')
-    parser.add_argument('f1', type=str, help='PS2 memory card image with ECC enabled')
-    parser.add_argument('f2', type=str, help='PS2 memory card image with ECC stripped')
+    parser = argparse.ArgumentParser(description='Converts PS2 memory card images between those with and without ECCs. Mainly for compatibility with MCP2 VMCs')
+    parser.add_argument('f1', type=str, help='Path to PS2 memory card image to be converted')
+    parser.add_argument('f2', type=str, help='Path to converted PS2 memory card image')
 
     args = parser.parse_args()
 
