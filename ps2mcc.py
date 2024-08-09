@@ -4,11 +4,13 @@ import argparse
 
 from ecc import calculate_ecc
 
-TOTAL_PAGES = 16
-ECC_PAGE_SIZE = 528
-ECC_BLOCK_SIZE = ECC_PAGE_SIZE * TOTAL_PAGES
-PAGE_SIZE = 512
-BLOCK_SIZE = PAGE_SIZE * TOTAL_PAGES
+# A standard 8MB PS2 memory card has 16384 pages.
+# Each page is 528 bytes. The last 16 bytes are the ECC. 
+# Therefore 512 byte page without ECC
+# Erase blocks are 16 pages long
+TOTAL_PAGES = 16384
+PAGE_SIZE = 528
+PAGE_SIZE_SLIM = PAGE_SIZE - 16 # Without ECC
 
 def main():
     parser = argparse.ArgumentParser(description='Converts PS2 memory card images between those with and without ECCs. Mainly for compatibility with MCP2 VMCs')
@@ -21,9 +23,9 @@ def main():
         with open(args.input, 'rb') as infile:
             vmc_raw = infile.read()
 
-        if len(vmc_raw) == 8650752: # Strip ECC
+        if len(vmc_raw) == TOTAL_PAGES * PAGE_SIZE: # Strip ECC
              output = strip_ecc(vmc_raw)
-        elif len(vmc_raw) == 8388608: # Add ECC
+        elif len(vmc_raw) == TOTAL_PAGES * PAGE_SIZE_SLIM: # Add ECC
              output = add_ecc(vmc_raw)
         else:
              print(f"{args.input} isn't a compatible image format")
@@ -37,43 +39,29 @@ def main():
         print(f"Something went wrong: {e}")
 
 def add_ecc(vmc_raw):
-    output = bytearray(8650752)
+    output = bytearray(TOTAL_PAGES*PAGE_SIZE)
 
-    for block in range(1024):
-        for page in range(16):
-            # Each page is 528 bytes. The last 16 bytes are the ECC. 
-            # Each block (16 pages) with ECC is 8448 bytes
-            o1 = (block*ECC_BLOCK_SIZE)+(page*ECC_PAGE_SIZE)
-            o2 = o1 + PAGE_SIZE
-            c1 = (block*BLOCK_SIZE)+(page*PAGE_SIZE)
-            c2 = c1 + PAGE_SIZE
-            block_bytes = vmc_raw[c1:c2] # Copy ECC-less block for reference
-            output[o1:o2] = block_bytes
+    for page in range(TOTAL_PAGES):
+        page_bytes = vmc_raw[(page*PAGE_SIZE_SLIM):(page*PAGE_SIZE_SLIM)+PAGE_SIZE_SLIM] # Copy ECC-less block for reference
+        o1 = (page*PAGE_SIZE)
+        o2 = o1 + PAGE_SIZE
+        output[o1:o2] = page_bytes
 
-            page_eccs = bytearray(16)
+        # Now calculate the ECCs
+        page_eccs = bytearray(16)
+        for chunk in range(4):
+            page_eccs[chunk*3:(chunk*3)+3] = calculate_ecc(page_bytes[chunk*128:(chunk*128)+128])
 
-            # Now calculate the ECCs
-            for chunk in range(4):
-                    page_eccs[chunk*3:(chunk*3)+3] = calculate_ecc(block_bytes[chunk*128:(chunk*128)+128])
-
-            # Bolt the ECCs onto the new page
-            output[o2:o2+16] = page_eccs
+        # Bolt the ECCs onto the new page
+        output[o2:o2+16] = page_eccs
 
     return output
 
 def strip_ecc(vmc_raw):
-    output = bytearray(8388608) # 8MB
+    output = bytearray(TOTAL_PAGES*PAGE_SIZE_SLIM)
 
-    for block in range(1024):
-        for page in range(16):
-            # Each page is 528 bytes. The last 16 bytes are the ECC. 
-            # Therefore 512 byte page without ECC
-            # Each block (16 pages) without ECC is 8192 bytes
-            o1 = (block*BLOCK_SIZE)+(page*PAGE_SIZE)
-            o2 = o1 + PAGE_SIZE
-            c1 = (block*ECC_BLOCK_SIZE)+(page*ECC_PAGE_SIZE)
-            c2 = c1 + PAGE_SIZE
-            output[o1:o2] = vmc_raw[c1:c2]
+    for page in range(TOTAL_PAGES):
+        output[(page*PAGE_SIZE_SLIM):(page*PAGE_SIZE_SLIM)+PAGE_SIZE_SLIM] = vmc_raw[(page*PAGE_SIZE):(page*PAGE_SIZE)+PAGE_SIZE_SLIM]
 
     return output
 
