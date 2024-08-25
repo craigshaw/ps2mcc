@@ -44,7 +44,7 @@ def add_ecc(vmc_raw):
     for page in range(TOTAL_PAGES):
         page_bytes = vmc_raw[(page*PAGE_SIZE_SLIM):(page*PAGE_SIZE_SLIM)+PAGE_SIZE_SLIM] # Copy ECC-less block for reference
         o1 = (page*PAGE_SIZE)
-        o2 = o1 + PAGE_SIZE
+        o2 = o1 + PAGE_SIZE_SLIM
         output[o1:o2] = page_bytes
 
         # Now calculate the ECCs
