@@ -24,14 +24,14 @@ options:
 ### Examples
 Convert the virtual memory card image from a MemCard PRO 2 to a PCSX2 compatible format
 ```
-$ python3 SLUS-21274-1.mc2 Mcd001.ps2
+$ python3 ps2mcc.py SLUS-21274-1.mc2 Mcd001.ps2
 ```
 This command takes the input file `SLUS-21274-1.mc2`, adds ECCs to it, and generates a new memory card image named `Mcd001.ps2` that is compatible with PCSX2
 ***
 
 Convert the virtual memory card image from PCSX2 to a MemCard PRO 2 compatible format
 ```
-$ python3 Mcd001.ps2 MemoryCard1-1.mc2
+$ python3 ps2mcc.py Mcd001.ps2 MemoryCard1-1.mc2
 ```
 This command takes the input file `Mcd001.ps2`, strips ECCs from it, and generates a new memory card image named `MemoryCard1-1.mc2` that is compatible with MemCard PRO 2
 
