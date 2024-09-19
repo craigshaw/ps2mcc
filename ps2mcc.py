@@ -4,6 +4,8 @@ import argparse
 
 from ecc import calculate_ecc
 
+VERSION = "1.0.0"
+
 # A standard 8MB PS2 memory card has 16384 pages.
 # Each page is 528 bytes. The last 16 bytes are the ECC. 
 # Therefore 512 byte page without ECC
@@ -13,11 +15,7 @@ PAGE_SIZE = 528
 PAGE_SIZE_SLIM = PAGE_SIZE - 16 # Without ECC
 
 def main():
-    parser = argparse.ArgumentParser(description='Converts PS2 memory card images between those with and without ECCs. Mainly for compatibility with MCP2 VMCs')
-    parser.add_argument('input', type=str, help='Path to PS2 memory card image to be converted')
-    parser.add_argument('output', type=str, help='Path to converted PS2 memory card image')
-
-    args = parser.parse_args()
+    args = read_args()
 
     try:
         with open(args.input, 'rb') as infile:
@@ -64,6 +62,14 @@ def strip_ecc(vmc_raw):
         output[(page*PAGE_SIZE_SLIM):(page*PAGE_SIZE_SLIM)+PAGE_SIZE_SLIM] = vmc_raw[(page*PAGE_SIZE):(page*PAGE_SIZE)+PAGE_SIZE_SLIM]
 
     return output
+
+def read_args():
+    parser = argparse.ArgumentParser(description='Converts PS2 memory card images between those with and without ECCs. Mainly for compatibility with MCP2 VMCs')
+    parser.add_argument('input', type=str, help='Path to PS2 memory card image to be converted')
+    parser.add_argument('output', type=str, help='Path to converted PS2 memory card image')
+    parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {VERSION}')
+
+    return parser.parse_args()
 
 if __name__ == "__main__":
     main()
